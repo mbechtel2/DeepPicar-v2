@@ -2,6 +2,8 @@
 DeepPicar is a low-cost autonomous vehicle platform that can be used for 
 researching performance requirements for self-driving cars.
 
+Some examples of the DeepPicar driving can be found at: https://photos.app.goo.gl/q40QFieD5iI9yXU42
+
 ## Hardware Configuration
 DeepPicar is comprised of the following components:
 
