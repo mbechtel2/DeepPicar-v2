@@ -1,6 +1,6 @@
 # DeepPicar
 
-<p align="center"><img src="https://github.com/mbechtel2/DeepPicar-v2/blob/master/images/DeepPicar_platform.png" width="480" height="480"/></p>
+<p align="center"><img src="https://github.com/mbechtel2/DeepPicar-v2/blob/master/images/DeepPicar_platform.jpg" width="480" height="480"/></p>
 
 DeepPicar is a low-cost autonomous vehicle platform that can be used for 
 researching performance requirements for self-driving cars.
