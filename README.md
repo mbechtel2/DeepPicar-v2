@@ -18,17 +18,21 @@ DeepPicar is comprised of the following components:
 
 ## Installation
 
-Install the following. 
+Install the following: 
 
 	$ sudo apt-get install python-opencv python-serial python-dev
 
-You also need to install the Tensorflow. 
+You also need to install Tensorflow.
+
+The repository can then be cloned with the following command:
+
+	$ git clone --depth=1 https://github.com/mbechtel2/DeepPicar-v2
 
 
 ## Driving DeepPicar
 For manual control:
 
-	$ python picar-mini-kbd-drv8835.py
+	$ python picar-mini-kbd-common.py  -t <throttle %>
 
 The controls are as follows:
 * 'a': drive the car forward
@@ -42,7 +46,7 @@ The controls are as follows:
     
 For autonomous control:
 
-	$ python picar-mini-dnn-drv8835.py
+	$ python  picar-mini-kbd-common.py -t <throttle %> -n <#of cpu to use> -d 
     
 ## Model Training
 Before training a model, the following changes should be made:
