@@ -27,6 +27,9 @@ actuator="actuator-drv8835"
 ##########################################################
 model="model-5conv_3fc"
 model_load_file="model-5conv_3fc-home_night.ckpt"
+model_load_file2="model-5conv_3fc-home_night.ckpt"
+model_load_file3="model-5conv_3fc-home_night.ckpt"
+model_load_file4="model-5conv_3fc-home_night.ckpt"
 model_save_file=model_load_file
 
 ##########################################################
