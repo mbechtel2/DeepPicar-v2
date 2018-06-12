@@ -10,6 +10,9 @@ Dave-2 and can drive itself in real-time locally on a Raspberry Pi 3.
 
 Some examples of the DeepPicar driving can be found at: https://photos.app.goo.gl/q40QFieD5iI9yXU42
 
+If you wish to recreate the paper's findings, you can train a model using our dataset which can be found at:
+https://drive.google.com/open?id=1LjIcOVH7xmbxV58lx3BClRcZ2DACfSwh
+
 ## Hardware Configuration
 DeepPicar is comprised of the following components:
 
