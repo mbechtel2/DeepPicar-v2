@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 from __future__ import division
 
 import os
@@ -59,12 +59,12 @@ for i in xrange(params.training_steps):
         txx, tyy = data.load_batch_category_normal('train')
     else:
         txx, tyy = data.load_batch('train')
-        
-    train_step.run(feed_dict={model.x: txx, model.y_: tyy, model.keep_prob: 0.8})
+
+    train_step.run(feed_dict={model.x: txx, model.y_: tyy})
 
     # write logs at every iteration
     if write_summary:
-        summary = merged_summary_op.eval(feed_dict={model.x: txx, model.y_: tyy, model.keep_prob: 1.0})
+        summary = merged_summary_op.eval(feed_dict={model.x: txx, model.y_: tyy})
         summary_writer.add_summary(summary, i)
 
     if (i+1) % 10 == 0:
@@ -73,8 +73,8 @@ for i in xrange(params.training_steps):
         else:
             vxx, vyy = data.load_batch('val')
 
-        t_loss = loss.eval(feed_dict={model.x: txx, model.y_: tyy, model.keep_prob: 1.0})
-        v_loss = loss.eval(feed_dict={model.x: vxx, model.y_: vyy, model.keep_prob: 1.0})
+        t_loss = loss.eval(feed_dict={model.x: txx, model.y_: tyy})
+        v_loss = loss.eval(feed_dict={model.x: vxx, model.y_: vyy})
         print "step {} of {}, train loss {}, val loss {}".format(i+1, params.training_steps, t_loss, v_loss)
 
     if (i+1) % 100 == 0:
@@ -85,5 +85,4 @@ for i in xrange(params.training_steps):
 
         time_passed = cm.pretty_running_time(time_start)
         time_left = cm.pretty_time_left(time_start, i, params.training_steps)
-        print 'Model saved. Time passed: {}. Time left: {}'.format(time_passed, time_left) 
-        
+        print 'Model saved. Time passed: {}. Time left: {}'.format(time_passed, time_left)
