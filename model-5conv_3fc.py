@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 from __future__ import division
 
 import tensorflow as tf
@@ -52,34 +52,26 @@ b_conv5 = bias_variable([64])
 h_conv5 = tf.nn.relu(conv2d(h_conv4, W_conv5, 1) + b_conv5)
 h_conv5_flat = tf.reshape(h_conv5, [-1, 1152])
 
-keep_prob = tf.placeholder(tf.float32)
-
 # fully connected layer 2
 W_fc2 = weight_variable("fc2", [1152, 100])
 b_fc2 = bias_variable([100])
 
 h_fc2 = tf.nn.relu(tf.matmul(h_conv5_flat, W_fc2) + b_fc2)
 
-h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob)
-
 # fully connected layer 3
 W_fc3 = weight_variable("fc3", [100, 50])
 b_fc3 = bias_variable([50])
 
-h_fc3 = tf.nn.relu(tf.matmul(h_fc2_drop, W_fc3) + b_fc3)
-
-h_fc3_drop = tf.nn.dropout(h_fc3, keep_prob)
+h_fc3 = tf.nn.relu(tf.matmul(h_fc2, W_fc3) + b_fc3)
 
 # fully connected layer 4
 W_fc4 = weight_variable("fc4", [50, 10])
 b_fc4 = bias_variable([10])
 
-h_fc4 = tf.nn.relu(tf.matmul(h_fc3_drop, W_fc4) + b_fc4)
-
-h_fc4_drop = tf.nn.dropout(h_fc4, keep_prob)
+h_fc4 = tf.nn.relu(tf.matmul(h_fc3, W_fc4) + b_fc4)
 
 # output
 W_fc5 = weight_variable("fc5", [10, 1])
 b_fc5 = bias_variable([1])
 
-y = tf.multiply(tf.atan(tf.matmul(h_fc4_drop, W_fc5) + b_fc5), 2) #scale the atan output
+y = tf.multiply(tf.atan(tf.matmul(h_fc4, W_fc5) + b_fc5), 2) #scale the atan output
