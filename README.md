@@ -120,6 +120,8 @@ NVIDIA Jetson TX2:
 
 	$ ./scripts/tx2-tests.sh
 
+All scripts will create a datafiles/Dataset-temp directory that will contain all of the experiment logs. It should be renamed before running another script or its contents may be partially, or completely, overwritten.
+
 ## Acknowledgement
 The DeepPicar code utilizes MIT's DeepTesla (https://github.com/lexfridman/deeptesla), which provides a TensorFlow version of NVIDIA Dave-2's CNN.
 
