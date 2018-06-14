@@ -63,7 +63,7 @@ for epoch_id in epoch_ids:
             img = preprocess.preprocess(img)
 
             pred_start = time.time()
-            rad = model.y.eval(feed_dict={model.x: [img], model.keep_prob: 1.0})[0][0]
+            rad = model.y.eval(feed_dict={model.x: [img]})[0][0]
             deg = rad2deg(rad)
             pred_end   = time.time()
 
