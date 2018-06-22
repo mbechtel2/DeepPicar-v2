@@ -134,7 +134,7 @@ https://arxiv.org/pdf/1604.07316
 ## Citation
 The paper for DeepPicar can be found at https://arxiv.org/abs/1712.08644. It can be cited using the following BibTeX entry:
 
-	@article{bechtel2017picar,
+	@inproceedings{bechtel2017picar,
 		title = {DeepPicar: A Low-cost Deep Neural Network-based Autonomous Car},    
 		author = {Michael Garrett Bechtel and Elise McEllhiney Minje Kim and Heechul Yun},
 		journal= {IEEE International Conference on Embedded and Real-Time Computing Systems and Applications (RTCSA)},

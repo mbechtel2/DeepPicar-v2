@@ -1,4 +1,7 @@
 
+#Enable PALLOC
+sudo ./palloc-setup.sh
+
 #Create directories
 cd ..
 mkdir datafiles/ReadCR
