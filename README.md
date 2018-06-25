@@ -137,6 +137,6 @@ The paper for DeepPicar can be found at https://arxiv.org/abs/1712.08644. It can
 	@inproceedings{bechtel2017picar,
 		title = {DeepPicar: A Low-cost Deep Neural Network-based Autonomous Car},    
 		author = {Michael Garrett Bechtel and Elise McEllhiney Minje Kim and Heechul Yun},
-		journal= {IEEE International Conference on Embedded and Real-Time Computing Systems and Applications (RTCSA)},
-		Year = {2018}
+		booktitle = {IEEE International Conference on Embedded and Real-Time Computing Systems and Applications (RTCSA)},
+		year = {2018}
 	}
