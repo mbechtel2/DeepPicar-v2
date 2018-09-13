@@ -8,7 +8,11 @@ of NVIDIA's real self-driving car called Dave-2, which drove on public
 roads using a CNN. DeepPicar uses the same CNN architecture of NVIDIA's
 Dave-2 and can drive itself in real-time locally on a Raspberry Pi 3.
 
-Some examples of the DeepPicar driving can be found at: https://photos.app.goo.gl/q40QFieD5iI9yXU42
+Video:
+
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/SrS5iQV2Pfo/0.jpg)](http://www.youtube.com/watch?v=SrS5iQV2Pfo "DeepPicar_Video")
+
+Some other examples of the DeepPicar driving can be found at: https://photos.app.goo.gl/q40QFieD5iI9yXU42
 
 If you wish to recreate the paper's findings, you can train a model using our dataset which can be found at:
 https://drive.google.com/open?id=1LjIcOVH7xmbxV58lx3BClRcZ2DACfSwh
