@@ -1,6 +1,6 @@
 # DeepPicar
 
-<p align="center"><img src="https://github.com/mbechtel2/DeepPicar-v2/blob/master/images/DeepPicar_platform.jpg" width="480" height="480"/></p>
+<p align="center"><img src="https://github.com/mbechtel2/DeepPicar-v2/blob/master/images/DeepPicar_platform.jpg"/></p>
 
 DeepPicar is a low-cost autonomous RC car platform using a deep
 convolutional neural network (CNN). DeepPicar is a small scale replication
