@@ -183,8 +183,7 @@ while True:
     if use_dnn == True:
         # 1. machine input
         img = preprocess.preprocess(frame)
-        angle = model.y.eval(feed_dict={model.x: [img],
-                                            model.keep_prob: 1.0})[0][0]
+        angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
         
         degree = rad2deg(angle)
         if degree < 15 and degree > -15:
