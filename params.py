@@ -12,9 +12,9 @@ camera="camera-webcam"
 
 ##########################################################
 # actuator selection
-#   "actuator-drv8835", "actuator-adafruit_hat"
+#   "actuator-drv8835", "actuator-adafruit_hat", "actuator-pca9685_l298n"
 ##########################################################
-actuator="actuator-drv8835"
+actuator="actuator-pca9685_l298n"
 
 ##########################################################
 # model selection
@@ -59,8 +59,8 @@ if not os.path.isdir(out_dir):
     os.makedirs(out_dir)
 
 epochs = OrderedDict()
-epochs['train'] = range(106, 110) # range(30, 50) + range(60, 68) 
-epochs['val']   = range(110, 112) # range(50, 60) + range(68, 70)
+epochs['train'] = range(1, 7) # range(30, 50) + range(60, 68) 
+epochs['val']   = range(1, 7) # range(50, 60) + range(68, 70)
 
 # data description
 # range(30, 60)        # ittc building. michael. resynchronized
