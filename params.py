@@ -59,11 +59,6 @@ if not os.path.isdir(out_dir):
     os.makedirs(out_dir)
 
 epochs = OrderedDict()
-epochs['train'] = range(106, 110) # range(30, 50) + range(60, 68) 
-epochs['val']   = range(110, 112) # range(50, 60) + range(68, 70)
-
-# data description
-# range(30, 60)        # ittc building. michael. resynchronized
-# range(60, 70)        # ittc building. yun
-# range(100, 106)      # home. yun
+epochs['train'] = [1,3,5,7,9,11] 
+epochs['val']   = [2,4,6,8,10]
 

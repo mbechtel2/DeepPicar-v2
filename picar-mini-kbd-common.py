@@ -9,6 +9,11 @@ import sys
 import params
 import argparse
 
+import Image
+import ImageDraw
+from moviepy.editor import ImageSequenceClip
+import local_common as cm
+
 import input_kbd
 
 ##########################################################
@@ -82,10 +87,13 @@ keyfile_btn = open('out-key-btn.csv', 'w+')
 keyfile.write("ts_micro,frame,wheel\n")
 keyfile_btn.write("ts_micro,frame,btn,speed\n")
 rec_start_time = 0
-# fourcc = cv2.VideoWriter_fourcc(*'XVID')
-fourcc = cv2.cv.CV_FOURCC(*'XVID')
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+fourcc2 = cv2.VideoWriter_fourcc(*'XVID')
+#fourcc = cv2.cv.CV_FOURCC(*'XVID')
 vidfile = cv2.VideoWriter('out-video.avi', fourcc, 
                           cfg_cam_fps, cfg_cam_res)
+fpvfile = cv2.VideoWriter('fpv-video.avi', fourcc2, 
+                          cfg_cam_fps, cfg_cam_res)												   
 
 # initlaize deeppicar modules
 actuator.init(cfg_throttle)
@@ -118,6 +126,8 @@ if use_dnn == True:
 g = g_tick()
 start_ts = time.time()
 
+frame_arr = []
+angle_arr = []
 # enter main loop
 while True:
     if use_thread:
@@ -184,18 +194,25 @@ while True:
         # 1. machine input
         img = preprocess.preprocess(frame)
         angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
+        car_angle = 0
         
         degree = rad2deg(angle)
         if degree < 15 and degree > -15:
             actuator.center()
+            car_angle = 0
             btn = ord('k')
         elif degree >= 15:
             actuator.right()
+            car_angle = 33
             btn = ord('l')
         elif degree <= -15:
             actuator.left()
+            car_angle = -33
             btn = ord('j')
 
+        frame_arr.append(frame)
+        angle_arr.append(car_angle)
+		
     dur = time.time() - ts
     if dur > period:
         print("%.3f: took %d ms - deadline miss."
@@ -223,8 +240,22 @@ while True:
             break
 
         print ("%.3f %d %.3f %d %d(ms)" %
-           (ts, frame_id, angle, btn, int((time.time() - ts)*1000)))
+           (ts, frame_id, angle, btn, int((time.time() - ts)*1000)))				   
 
+if use_dnn == True:
+	textColor = (255,255,255)
+	bgColor = (0,0,0)
+	for i in xrange(len(frame_arr)):
+		newImage = Image.new('RGBA', (100, 20), bgColor)
+		drawer = ImageDraw.Draw(newImage)
+		drawer.text((0, 0), "Frame #{}".format(i), fill=textColor)
+		drawer.text((0, 10), "Angle:{}".format(angle_arr[i]), fill=textColor)
+		newImage = cv2.cvtColor(np.array(newImage), cv2.COLOR_BGR2RGBA)
+		frame_arr[i] = cm.overlay_image(frame_arr[i], newImage, x_offset = 0, y_offset = 0)
 
+	#Create a video using the frames collected
+	clip = ImageSequenceClip(frame_arr, fps=30) 
+	clip.write_videofile('fpv-video.mp4') #	
+	
 print ("Finish..")
 turn_off()
