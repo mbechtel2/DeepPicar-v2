@@ -26,6 +26,8 @@ DeepPicar is comprised of the following components:
 * Pololu DRV8835 motor hat: $8
 * External battery pack & misc.: $10
 
+Please refer to [Parts and Assembly](https://github.com/mbechtel2/DeepPicar-v2/wiki/Parts-and-Assembly) for assembly steps.
+
 ## Installation
 
 Install the following:
@@ -40,6 +42,9 @@ The repository can then be cloned with the following command:
 
 
 ## Driving DeepPicar
+
+This section gives a quick overview of controlling the DeepPicar. More in-depth steps can be found in [Setup and Operation](https://github.com/mbechtel2/DeepPicar-v2/wiki/Setup-and-Operation).
+
 For manual control:
 
 	$ python picar-mini-kbd-common.py  -t <throttle %> -n <#of cpu to use>
