@@ -74,4 +74,4 @@ h_fc4 = tf.nn.relu(tf.matmul(h_fc3, W_fc4, name="matmul3") + b_fc4, name="relu8"
 W_fc5 = weight_variable("fc5", [10, 1])
 b_fc5 = bias_variable([1])
 
-y = tf.multiply(tf.atan(tf.matmul(h_fc4, W_fc5, name="matmul4") + b_fc5), 2, name="atan1") #scale the atan output
+y = tf.multiply(tf.matmul(h_fc4, W_fc5, name="matmul4") + b_fc5, 2, name="atan1")

@@ -86,3 +86,12 @@ for i in xrange(params.training_steps):
         time_passed = cm.pretty_running_time(time_start)
         time_left = cm.pretty_time_left(time_start, i, params.training_steps)
         print 'Model saved. Time passed: {}. Time left: {}'.format(time_passed, time_left)
+
+converter = tf.contrib.lite.TFLiteConverter.from_session(sess, [model.x], [model.y])
+tflite_model = converter.convert()
+open("deeppicar_model.tflite", "wb").write(tflite_model)
+
+quant_converter = tf.contrib.lite.TFLiteConverter.from_session(sess, [model.x], [model.y])
+quant_converter.post_training_quantize = True
+quant_model = quant_converter.convert()
+open("deeppicar_quantized.tflite", "wb").write(quant_model)
