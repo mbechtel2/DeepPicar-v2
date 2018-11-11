@@ -28,6 +28,7 @@ actuator = __import__(params.actuator)
 use_dnn = False
 use_thread = True
 view_video = False
+fpv_video = False
 
 cfg_cam_res = (320, 240)
 cfg_cam_fps = 30
@@ -55,10 +56,10 @@ def g_tick():
         count += 1
         yield max(t + count*period - time.time(),0)
 
-def turn_off():    
+def turn_off():
     actuator.stop()
     camera.stop()
-    
+
     keyfile.close()
     keyfile_btn.close()
     vidfile.release()
@@ -70,6 +71,7 @@ parser = argparse.ArgumentParser(description='DeepPicar main')
 parser.add_argument("-d", "--dnn", help="Enable DNN", action="store_true")
 parser.add_argument("-t", "--throttle", help="throttle percent. [0-100]%", type=int)
 parser.add_argument("-n", "--ncpu", help="number of cores to use.", type=int)
+parser.add_argument("-f", "--fpvvideo", help="Take FPV video of DNN driving", action="store_true")
 args = parser.parse_args()
 
 if args.dnn:
@@ -80,6 +82,8 @@ if args.throttle:
     print ("throttle = %d pct" % (args.throttle))
 if args.ncpu > 0:
     NCPU = args.ncpu
+if args.fpvvideo:
+    fpv_video = True
 
 # create files for data recording
 keyfile = open('out-key.csv', 'w+')
@@ -90,10 +94,10 @@ rec_start_time = 0
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 fourcc2 = cv2.VideoWriter_fourcc(*'XVID')
 #fourcc = cv2.cv.CV_FOURCC(*'XVID')
-vidfile = cv2.VideoWriter('out-video.avi', fourcc, 
+vidfile = cv2.VideoWriter('out-video.avi', fourcc,
                           cfg_cam_fps, cfg_cam_res)
-fpvfile = cv2.VideoWriter('fpv-video.avi', fourcc2, 
-                          cfg_cam_fps, cfg_cam_res)												   
+fpvfile = cv2.VideoWriter('fpv-video.avi', fourcc2,
+                          cfg_cam_fps, cfg_cam_res)
 
 # initlaize deeppicar modules
 actuator.init(cfg_throttle)
@@ -114,7 +118,7 @@ if use_dnn == True:
                             allow_soft_placement=True,
                             device_count = {'CPU': 1})
 
-    sess = tf.InteractiveSession(config=config)    
+    sess = tf.InteractiveSession(config=config)
     saver = tf.train.Saver()
     model_load_path = cm.jn(params.save_dir, params.model_load_file)
     saver.restore(sess, model_load_path)
@@ -137,13 +141,13 @@ while True:
 
     # read a frame
     # ret, frame = cap.read()
-        
+
     if view_video == True:
         cv2.imshow('frame', frame)
         ch = cv2.waitKey(1) & 0xFF
     else:
         ch = ord(input_kbd.read_single_keypress())
-    
+
     if ch == ord('j'):
         actuator.left()
         print ("left")
@@ -158,7 +162,7 @@ while True:
         actuator.right()
         print ("right")
         angle = deg2rad(30)
-        btn   = ord('l')         
+        btn   = ord('l')
     elif ch == ord('a'):
         actuator.ffw()
         print ("accel")
@@ -195,7 +199,7 @@ while True:
         img = preprocess.preprocess(frame)
         angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
         car_angle = 0
-        
+
         degree = rad2deg(angle)
         if degree < 15 and degree > -15:
             actuator.center()
@@ -203,16 +207,17 @@ while True:
             btn = ord('k')
         elif degree >= 15:
             actuator.right()
-            car_angle = 33
+            car_angle = 30
             btn = ord('l')
         elif degree <= -15:
             actuator.left()
-            car_angle = -33
+            car_angle = -30
             btn = ord('j')
 
-        frame_arr.append(frame)
-        angle_arr.append(car_angle)
-		
+        if fpv_video:
+            frame_arr.append(frame)
+            angle_arr.append(car_angle)
+
     dur = time.time() - ts
     if dur > period:
         print("%.3f: took %d ms - deadline miss."
@@ -223,26 +228,26 @@ while True:
     if rec_start_time > 0:
         # increase frame_id
         frame_id += 1
-        
+
         # write input (angle)
         str = "{},{},{}\n".format(int(ts*1000), frame_id, angle)
         keyfile.write(str)
-        
+
         # write input (button: left, center, stop, speed)
         str = "{},{},{},{}\n".format(int(ts*1000), frame_id, btn, cfg_throttle)
         keyfile_btn.write(str)
-        
+
         # write video stream
         vidfile.write(frame)
-        
+
         if frame_id >= 1000:
             print ("recorded 1000 frames")
             break
 
         print ("%.3f %d %.3f %d %d(ms)" %
-           (ts, frame_id, angle, btn, int((time.time() - ts)*1000)))				   
+           (ts, frame_id, angle, btn, int((time.time() - ts)*1000)))
 
-if use_dnn == True:
+if fpv_video:
 	textColor = (255,255,255)
 	bgColor = (0,0,0)
 	for i in xrange(len(frame_arr)):
@@ -254,8 +259,8 @@ if use_dnn == True:
 		frame_arr[i] = cm.overlay_image(frame_arr[i], newImage, x_offset = 0, y_offset = 0)
 
 	#Create a video using the frames collected
-	clip = ImageSequenceClip(frame_arr, fps=30) 
-	clip.write_videofile('fpv-video.mp4') #	
-	
+	clip = ImageSequenceClip(frame_arr, fps=30)
+	clip.write_videofile('fpv-video.mp4') #
+
 print ("Finish..")
 turn_off()
