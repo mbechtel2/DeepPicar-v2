@@ -232,13 +232,13 @@ while True:
         str = "{},{},{},{}\n".format(int(ts*1000), frame_id, btn, cfg_throttle)
         keyfile_btn.write(str)
 
-        if fpv_video:
+        if use_dnn and fpv_video:
             textColor = (255,255,255)
             bgColor = (0,0,0)
             newImage = Image.new('RGBA', (100, 20), bgColor)
             drawer = ImageDraw.Draw(newImage)
-            drawer.text((0, 0), "Frame #{}".format(i), fill=textColor)
-            drawer.text((0, 10), "Angle:{}".format(angle), fill=textColor)
+            drawer.text((0, 0), "Frame #{}".format(frame_id), fill=textColor)
+            drawer.text((0, 10), "Angle:{}".format(car_angle), fill=textColor)
             newImage = cv2.cvtColor(np.array(newImage), cv2.COLOR_BGR2RGBA)
             frame = cm.overlay_image(frame,
                                      newImage,
