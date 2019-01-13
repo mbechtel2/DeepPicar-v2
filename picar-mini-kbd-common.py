@@ -94,8 +94,6 @@ fourcc = cv2.VideoWriter_fourcc(*'XVID')
 #fourcc = cv2.cv.CV_FOURCC(*'XVID')
 vidfile = cv2.VideoWriter('out-video.avi', fourcc,
                           cfg_cam_fps, cfg_cam_res)
-fpvfile = cv2.VideoWriter('fpv-video.avi', fourcc2,
-                          cfg_cam_fps, cfg_cam_res)
 
 # initlaize deeppicar modules
 actuator.init(cfg_throttle)
