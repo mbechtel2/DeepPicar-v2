@@ -66,9 +66,9 @@ For autonomous control:
 ## Model Training
 Before training a model, the following changes should be made:
 
-Change model (folder) name:
+Change model (file) name:
 
-	save_dir = os.path.abspath('...') #Replace ... with a name for the model
+	model_load_file = os.path.abspath('...') #Replace ... with a name for the model
 
 Change if normal category is to be used:
 
@@ -124,7 +124,7 @@ scripts:
 
 Raspberry Pi 3:
 
-	$ ./scripts/model-tests.sh #Should also be Intel UP Board
+	$ ./scripts/model-tests.sh #Should also work on the Intel UP Board
 	$ ./scripts/memguard-tests.sh
 	$ ./scripts/palloc-tests.sh
 
@@ -133,6 +133,8 @@ NVIDIA Jetson TX2:
 	$ ./scripts/tx2-tests.sh
 
 All scripts will create a datafiles/Dataset-temp directory that will contain all of the experiment logs. It should be renamed before running another script or its contents may be partially, or completely, overwritten.
+
+*For the multimodel tests done in the 'model-tests.sh' script, make sure that all 'model_load_file' values in 'params.py' are different so that the same model(s) aren't used multiple times.
 
 ## Acknowledgement
 The DeepPicar code utilizes MIT's DeepTesla (https://github.com/lexfridman/deeptesla), which provides a TensorFlow version of NVIDIA Dave-2's CNN.
