@@ -1,5 +1,7 @@
 #!/usr/bin/python
 import os
+import signal
+import sys
 import time
 import atexit
 import cv2
@@ -26,6 +28,7 @@ actuator = __import__(params.actuator)
 ##########################################################
 use_dnn = False
 use_thread = True
+use_keyinput = True
 view_video = False
 fpv_video = False
 
@@ -39,6 +42,8 @@ frame_id = 0
 angle = 0.0
 btn   = ord('k') # center
 period = 0.05 # sec (=50ms)
+timeout = 0.0 # no timeout
+tot_time_list = []
 
 ##########################################################
 # local functions
@@ -63,14 +68,43 @@ def turn_off():
     keyfile_btn.close()
     vidfile.release()
 
+    #Calculate and display statistics of the total inferencing times
+    print "count:", len(tot_time_list)
+    print "mean:", np.mean(tot_time_list)
+    print "max:", np.max(tot_time_list)
+    print "99.999pct:", np.percentile(tot_time_list, 99.999)
+    print "99.99pct:", np.percentile(tot_time_list, 99.99)
+    print "99.9pct:", np.percentile(tot_time_list, 99.9)
+    print "99pct:", np.percentile(tot_time_list, 99)
+    print "min:", np.min(tot_time_list)
+    print "median:", np.median(tot_time_list)
+    print "stdev:", np.std(tot_time_list) 
+
+def signal_handler(sig, frame):
+    turn_off()
+    sys.exit(0)
+
 ##########################################################
 # program begins
 ##########################################################
 parser = argparse.ArgumentParser(description='DeepPicar main')
-parser.add_argument("-d", "--dnn", help="Enable DNN", action="store_true")
-parser.add_argument("-t", "--throttle", help="throttle percent. [0-100]%", type=int)
-parser.add_argument("-n", "--ncpu", help="number of cores to use.", type=int)
-parser.add_argument("-f", "--fpvvideo", help="Take FPV video of DNN driving", action="store_true")
+parser.add_argument("-d", "--dnn",
+                    help="Enable DNN", action="store_true")
+parser.add_argument("-t", "--throttle",
+                    help="throttle percent. [0-100]%", type=int)
+parser.add_argument("-n", "--ncpu",
+                    help="number of cores to use.", type=int)
+parser.add_argument("-f", "--fpvvideo",
+                    help="Take FPV video of DNN driving", action="store_true")
+parser.add_argument("-x", "--time",
+                    help="exit time limit in seconds.", type=int)
+parser.add_argument("-p", "--period",
+                    help="real-time control period in ms.", type=float)
+parser.add_argument("-k", "--nokey",
+                    help="no keyboard input mode", action="store_true")
+parser.add_argument("-v", "--verbose",
+                    help="debug level", type=int)
+
 args = parser.parse_args()
 
 if args.dnn:
@@ -83,6 +117,14 @@ if args.ncpu > 0:
     NCPU = args.ncpu
 if args.fpvvideo:
     fpv_video = True
+if args.period:
+    period = args.period
+    print ("period = %d ms" % int(args.period*1000))
+if args.time:
+    timeout = args.time
+    print ("timeout = %d" % args.time)
+if args.nokey:
+    use_keyinput = False
 
 # create files for data recording
 keyfile = open('out-key.csv', 'w+')
@@ -91,11 +133,10 @@ keyfile.write("ts_micro,frame,wheel\n")
 keyfile_btn.write("ts_micro,frame,btn,speed\n")
 rec_start_time = 0
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
-fourcc2 = cv2.VideoWriter_fourcc(*'XVID')
 #fourcc = cv2.cv.CV_FOURCC(*'XVID')
 vidfile = cv2.VideoWriter('out-video.avi', fourcc,
                           cfg_cam_fps, cfg_cam_res)
-fpvfile = cv2.VideoWriter('fpv-video.avi', fourcc2,
+fpvfile = cv2.VideoWriter('fpv-video.avi', fourcc,
                           cfg_cam_fps, cfg_cam_res)
 
 # initlaize deeppicar modules
@@ -121,6 +162,12 @@ if use_dnn == True:
     saver = tf.train.Saver()
     model_load_path = cm.jn(params.save_dir, params.model_load_file)
     saver.restore(sess, model_load_path)
+
+    # warm up.
+    frame = camera.read_frame()
+    img = preprocess.preprocess(frame)
+    angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
+    
     print ("Done..")
 
 # null_frame = np.zeros((cfg_cam_res[0],cfg_cam_res[1],3), np.uint8)
@@ -129,8 +176,9 @@ if use_dnn == True:
 g = g_tick()
 start_ts = time.time()
 
-frame_arr = []
-angle_arr = []
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
 # enter main loop
 while True:
     if use_thread:
@@ -144,9 +192,11 @@ while True:
     if view_video == True:
         cv2.imshow('frame', frame)
         ch = cv2.waitKey(1) & 0xFF
-    else:
+    elif use_keyinput == True:
         ch = ord(input_kbd.read_single_keypress())
-
+    else:
+        ch = ''
+        
     if ch == ord('j'):
         actuator.left()
         print ("left")
@@ -214,11 +264,14 @@ while True:
             btn = ord('j')
 
     dur = time.time() - ts
+
+    tot_time_list.append(dur)
+    
     if dur > period:
-        print("%.3f: took %d ms - deadline miss."
-              % (ts - start_ts, int(dur * 1000)))
-    else:
-        print("%.3f: took %d ms" % (ts - start_ts, int(dur * 1000)))
+        print("%.3f: took %.3f ms - deadline miss."
+              % (ts - start_ts, float(dur * 1000)))
+    elif args.verbose:
+        print("%.3f: took %.3f ms" % (ts - start_ts, float(dur * 1000)))
 
     if rec_start_time > 0:
         # increase frame_id
@@ -251,5 +304,10 @@ while True:
         print ("%.3f %d %.3f %d %d(ms)" %
            (ts, frame_id, angle, btn, int((time.time() - ts)*1000)))
 
+    if timeout > 0 and (ts - start_ts) > timeout:
+        print("timeout after %d seconds" % args.time)
+        break
+    
 print ("Finish..")
 turn_off()
+
