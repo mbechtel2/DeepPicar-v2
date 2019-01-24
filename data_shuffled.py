@@ -20,11 +20,13 @@ img_channels = params.img_channels
 purposes = ['train', 'val']
 imgs = OrderedDict()
 wheels = OrderedDict()
+throttles = OrderedDict()
 for purpose in purposes:
     imgs[purpose] = []
     wheels[purpose] = []
+    throttles[purpose] = []
 
-categories = ['center', 'curve']    
+categories = ['center', 'curve']
 imgs_cat = OrderedDict()
 wheels_cat = OrderedDict()
 for p in purposes:
@@ -37,6 +39,7 @@ for p in purposes:
 def load_imgs_v2():
     global imgs
     global wheels
+    global throttles
 
     for epoch_id in epochs['all']:
         print ('processing and loading epoch {} into memorys. train:{}, val:{}'.format(
@@ -66,18 +69,21 @@ def load_imgs_v2():
 
             img = preprocess.preprocess(img)
             angle = float(row['wheel'])
+            throttle = int(row['throttle'])
 
             if random.random() < params.train_pct:
                 imgs['train'].append(img)
                 wheels['train'].append([angle])
+                throttles['train'].append([throttle])
             else:
                 imgs['val'].append(img)
                 wheels['val'].append([angle])
+                throttles['val'].append([throttle])
 
         cap.release()
 
     print ('Total data: train:{}, val:{}'.format(len(imgs['train']), len(imgs['val'])))
-    
+
 # load all preprocessed training images into memory
 def load_imgs():
     global imgs
@@ -104,6 +110,7 @@ def load_imgs():
             print ("{}, {}".format(len(rows), frame_count))
             assert frame_count == len(rows)
             yy = [[float(row['wheel'])] for row in rows]
+            zz = [[int(row['throttle'])] for row in rows]
 
             while True:
                 ret, img = cap.read()
@@ -114,6 +121,7 @@ def load_imgs():
                 imgs[p].append(img)
 
             wheels[p].extend(yy)
+            throttles[p].extend(zz)
             assert len(imgs[p]) == len(wheels[p])
 
             cap.release()
@@ -131,6 +139,22 @@ def load_batch(purpose):
     for i in ii:
         xx.append(imgs[p][i])
         yy.append(wheels[p][i])
+
+    return xx, yy
+
+def load_batch_stop(purpose):
+    p = purpose
+    assert len(imgs[p]) == len(throttles[p])
+    n = len(imgs[p])
+    assert n > 0
+
+    ii = random.sample(xrange(0, n), params.batch_size)
+    assert len(ii) == params.batch_size
+
+    xx, yy = [], []
+    for i in ii:
+        xx.append(imgs[p][i])
+        yy.append(throttles[p][i])
 
     return xx, yy
 
