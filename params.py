@@ -8,14 +8,14 @@ from collections import OrderedDict
 # camera module selection
 #   "camera-webcam" "camera-null"
 ##########################################################
-camera="camera-webcam"
+camera="camera-null"
 
 ##########################################################
 # actuator selection
 #   "actuator-drv8835", "actuator-adafruit_hat"
 #   "actuator-null"
 ##########################################################
-actuator="actuator-drv8835"
+actuator="actuator-null"
 
 ##########################################################
 # model selection
@@ -26,19 +26,16 @@ actuator="actuator-drv8835"
 #   "model-5conv_3fc_noreuse.ckpt"  <-- ittc building maze
 #   "model-5conv_3fc-home_night.ckpt" <-- kitchen@night
 ##########################################################
-model="model-5conv_3fc"
-model_load_file="model-5conv_3fc-home_night.ckpt"
-model_load_file2="model-5conv_3fc-home_night.ckpt"
-model_load_file3="model-5conv_3fc-home_night.ckpt"
-model_load_file4="model-5conv_3fc-home_night.ckpt"
-model_save_file=model_load_file
+model="model-5conv_3fc-200x200"
+model_save_file=""
+model_load_file="input200x200"
 
 ##########################################################
 # Training options
 ##########################################################
 batch_size = 100
 training_steps = 2000
-img_height = 66
+img_height =200
 img_width = 200
 img_channels = 3
 write_summary = True
