@@ -16,7 +16,7 @@ Some other examples of the DeepPicar driving can be found at: https://photos.app
 
 If you wish to recreate the paper's findings, you can train one or more models using our dataset which can be found at:
 https://drive.google.com/open?id=1LjIcOVH7xmbxV58lx3BClRcZ2DACfSwh
-The Evaluation section below details the steps needed for running the experiments conducted in the paper.
+Please refer to [Embedded Platform Comparison](https://github.com/mbechtel2/DeepPicar-v2/wiki/Embedded-Platform-Evaluation) for the steps needed to run the experiments conducted in the paper.
 
 ## Hardware Configuration
 DeepPicar is comprised of the following components:
