@@ -32,7 +32,7 @@ Please refer to [Parts and Assembly](https://github.com/mbechtel2/DeepPicar-v2/w
 
 Install the following:
 
-	$ sudo apt-get install python-opencv python-serial python-dev
+	$ sudo apt-get install python-opencv python-serial python-dev python-imaging
 
 You also need to install Tensorflow.
 
