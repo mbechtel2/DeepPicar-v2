@@ -133,8 +133,8 @@ keyfile_btn = open('out-key-btn.csv', 'w+')
 keyfile.write("ts_micro,frame,wheel,throttle\n")
 keyfile_btn.write("ts_micro,frame,btn,speed\n")
 rec_start_time = 0
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-#fourcc = cv2.cv.CV_FOURCC(*'XVID')
+# fourcc = cv2.VideoWriter_fourcc(*'XVID')
+fourcc = cv2.cv.CV_FOURCC(*'XVID')
 vidfile = cv2.VideoWriter('out-video.avi', fourcc,
                           cfg_cam_fps, cfg_cam_res)
 fpvfile = cv2.VideoWriter('fpv-video.avi', fourcc,
