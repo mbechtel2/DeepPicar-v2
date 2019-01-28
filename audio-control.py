@@ -11,6 +11,7 @@ import struct
 import array
 import wave
 import audioop
+import params
 from pololu_drv8835_rpi import motors,MAX_SPEED
 
 actuator = __import__(params.actuator)
@@ -39,8 +40,8 @@ inp.setperiodsize(160)
 input_layer_name = 'wav_data:0'
 output_layer_name = 'labels_softmax:0'
 
-f = tf.gfile.GFile("./svdf_frozen_graph.pb", 'rb')
-l = tf.gfile.GFile("./svdf_labels.txt")
+f = tf.gfile.GFile("./stopgo_svdf_frozen_graph.pb", 'rb')
+l = tf.gfile.GFile("./stopgo_svdf_labels.txt")
 
 config = tf.ConfigProto(intra_op_parallelism_threads=4,
                             inter_op_parallelism_threads=4, \
@@ -61,12 +62,16 @@ threshold = 1000
 
 print "START"
 while True:
-    temp, data = inp.read()
-    if audioop.rms(data, 2) > threshold:
-        print audioop.rms(data,2)
+    cur = []
+    for i in range(20000):
+        temp, data = inp.read()
+        cur.append(data)
+    str = b''.join(cur)
+    if audioop.rms(str, 2) > threshold:
+        print audioop.rms(str,2)
         arr = []
-        arr.append(data)
-        for i in range(200000):
+        arr.append(str)
+        for i in range(80000):
             temp, data = inp.read()
             arr.append(data)
         write_to_wav(arr)
@@ -78,19 +83,18 @@ while True:
         end = time.time()
         dur = (end - start) * 1000
         print dur
-        top = predictions.argsort()[-1:][::-1]
-        for i in top:
-            word = labels[i]
-            val = predictions[i]
-            print "\t{} w/ {}".format(word, val)
-            if labels[i] == "go" or labels[i] == "no":
-                actuator.ffw()
-            else if labels[i] == "stop" or labels[i] == "up":
-                actuator.stop()
+        top = predictions.argsort()[-1:][::-1][0]
+        word = labels[top]
+        val = predictions[top]
+        print "\t{} w/ {}".format(word, val)
         if first:
             first = False
         else:
             times.append(dur)
+            if labels[top] == "go":
+                actuator.ffw()
+            elif labels[top] == "stop":
+                actuator.stop()
 
 print "Num: {}".format(len(times))
 print "Average: {}".format(np.mean(times))
