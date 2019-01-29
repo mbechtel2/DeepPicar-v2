@@ -18,7 +18,7 @@ actuator = __import__(params.actuator)
 actuator.init()
 
 def write_to_wav(arr):
-    wavefile = wave.open("test.wav", 'wb')
+    wavefile = wave.open("tmp/test.wav", 'wb')
     wavefile.setnchannels(1)
     wavefile.setsampwidth(2)
     wavefile.setframerate(16000)
@@ -26,7 +26,7 @@ def write_to_wav(arr):
     wavefile.close()
 
 def read_from_wav():
-    wavefile = open("test.wav", 'rb')
+    wavefile = open("tmp/test.wav", 'rb')
     data = wavefile.read()
     wavefile.close()
     return data
@@ -53,17 +53,30 @@ graph_def = tf.GraphDef()
 graph_def.ParseFromString(f.read())
 tf.import_graph_def(graph_def, name='')
 
+data_dir = os.path.abspath('tmp')
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
+
+init = []
+for i in range(40000):
+    temp,data = inp.read()
+    init.append(data)
+write_to_wav(b''.join(init))
+warmup_data = read_from_wav()
+softmax_tensor = sess.graph.get_tensor_by_name(output_layer_name)
+predictions, = sess.run(softmax_tensor, {input_layer_name: warmup_data})
+
 labels = [line.rstrip() for line in l]
 
 times = []
 first = True
 
-threshold = 1000
+threshold = 700
 
 print "START"
 while True:
     cur = []
-    for i in range(20000):
+    for i in range(15000):
         temp, data = inp.read()
         cur.append(data)
     str = b''.join(cur)
@@ -71,7 +84,7 @@ while True:
         print audioop.rms(str,2)
         arr = []
         arr.append(str)
-        for i in range(80000):
+        for i in range(15000):
             temp, data = inp.read()
             arr.append(data)
         write_to_wav(arr)
@@ -87,10 +100,10 @@ while True:
         word = labels[top]
         val = predictions[top]
         print "\t{} w/ {}".format(word, val)
+        times.append(dur)
         if first:
             first = False
         else:
-            times.append(dur)
             if labels[top] == "go":
                 actuator.ffw()
             elif labels[top] == "stop":
