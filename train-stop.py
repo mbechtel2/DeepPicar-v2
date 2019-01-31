@@ -25,7 +25,7 @@ train_step = tf.train.AdamOptimizer(1e-4).minimize(loss)
 
 saver = tf.train.Saver()
 
-model_load_path = cm.jn(params.save_dir, params.model_load_file)
+model_load_path = cm.jn(params.save_dir, params.stop_model_load_file)
 print model_load_path
 if os.path.exists(model_load_path + ".index"):
     print ("Loading initial weights from %s" % model_load_path)
@@ -56,7 +56,7 @@ data.categorize_imgs()
 
 for i in xrange(params.training_steps):
     if params.use_category_normal:
-        txx, tyy = data.load_batch_category_normal('train')
+        txx, tyy = data.load_batch_stop_category_normal('train')
     else:
         txx, tyy = data.load_batch_stop('train')
 
@@ -69,9 +69,9 @@ for i in xrange(params.training_steps):
 
     if (i+1) % 10 == 0:
         if params.use_category_normal:
-            vxx, vyy = data.load_batch_category_normal('val')
+            vxx, vyy = data.load_batch_stop_category_normal('val')
         else:
-            vxx, vyy = data.load_batch('val')
+            vxx, vyy = data.load_batch_stop('val')
 
         t_loss = loss.eval(feed_dict={model.x: txx, model.y_: tyy})
         v_loss = loss.eval(feed_dict={model.x: vxx, model.y_: vyy})
@@ -80,7 +80,7 @@ for i in xrange(params.training_steps):
     if (i+1) % 100 == 0:
         if not os.path.exists(params.save_dir):
             os.makedirs(params.save_dir)
-        checkpoint_path = os.path.join(params.save_dir, params.model_save_file)
+        checkpoint_path = os.path.join(params.save_dir, params.stop_model_save_file)
         filename = saver.save(sess, checkpoint_path)
 
         time_passed = cm.pretty_running_time(time_start)

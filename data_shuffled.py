@@ -26,15 +26,18 @@ for purpose in purposes:
     wheels[purpose] = []
     throttles[purpose] = []
 
-categories = ['center', 'curve']
+categories = ['center', 'curve', 'stop', 'forward']
 imgs_cat = OrderedDict()
 wheels_cat = OrderedDict()
+throttles_cat = OrderedDict()
 for p in purposes:
     imgs_cat[p] = OrderedDict()
     wheels_cat[p] = OrderedDict()
+    throttles_cat[p] = OrderedDict()
     for c in categories:
         imgs_cat[p][c] = []
         wheels_cat[p][c] = []
+        throttles_cat[p][c] = []
 
 def load_imgs_v2():
     global imgs
@@ -176,6 +179,13 @@ def categorize_imgs():
                 imgs_cat[p]['curve'].append(imgs[p][i])
                 wheels_cat[p]['curve'].append(wheels[p][i])
 
+            if throttles[p][i][0] == 0:
+                imgs_cat[p]['stop'].append(imgs[p][i])
+                throttles_cat[p]['stop'].append(throttles[p][i])
+            else:
+                imgs_cat[p]['forward'].append(imgs[p][i])
+                throttles_cat[p]['forward'].append(throttles[p][i])
+
         print ('---< {} >---'.format(p))
         for c in categories:
             print ('# {} imgs: {}'.format(c, len(imgs_cat[p][c])))
@@ -183,8 +193,9 @@ def categorize_imgs():
 def load_batch_category_normal(purpose):
     p = purpose
     xx, yy = [], []
-    nc = len(categories)
-    for c in categories:
+    temp_categories = ['center', 'curve']
+    nc = len(temp_categories)
+    for c in temp_categories:
         n = len(imgs_cat[p][c])
         assert n > 0
         ii = random.sample(xrange(0, n), int(params.batch_size/nc))
@@ -192,6 +203,22 @@ def load_batch_category_normal(purpose):
         for i in ii:
             xx.append(imgs_cat[p][c][i])
             yy.append(wheels_cat[p][c][i])
+
+    return xx, yy
+
+def load_batch_stop_category_normal(purpose):
+    p = purpose
+    xx, yy = [], []
+    temp_categories = ['stop', 'forward']
+    nc = len(temp_categories)
+    for c in temp_categories:
+        n = len(imgs_cat[p][c])
+        assert n > 0
+        ii = random.sample(xrange(0, n), int(params.batch_size/nc))
+        assert len(ii) == int(params.batch_size/nc)
+        for i in ii:
+            xx.append(imgs_cat[p][c][i])
+            yy.append(throttles_cat[p][c][i])
 
     return xx, yy
 
