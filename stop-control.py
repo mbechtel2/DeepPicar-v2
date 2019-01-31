@@ -127,6 +127,17 @@ if args.time:
 if args.nokey:
     use_keyinput = False
 
+# create files for data recording
+keyfile = open('out-key.csv', 'w+')
+keyfile_btn = open('out-key-btn.csv', 'w+')
+keyfile.write("ts_micro,frame,wheel,throttle\n")
+keyfile_btn.write("ts_micro,frame,btn,speed\n")
+rec_start_time = 0
+# fourcc = cv2.VideoWriter_fourcc(*'XVID')
+fourcc = cv2.cv.CV_FOURCC(*'XVID')
+vidfile = cv2.VideoWriter('out-video.avi', fourcc,
+                          cfg_cam_fps, cfg_cam_res)
+
 # initlaize deeppicar modules
 actuator.init(cfg_throttle)
 camera.init(res=cfg_cam_res, fps=cfg_cam_fps, threading=use_thread)
@@ -240,6 +251,7 @@ while True:
         # 1. machine input
         img = preprocess.preprocess(frame)
         dnn_throttle = model.y.eval(feed_dict={model.x: [img]})[0][0]
+        print dnn_throttle
         car_angle = 0
 
         degree = rad2deg(angle)
@@ -262,6 +274,21 @@ while True:
               % (ts - start_ts, float(dur * 1000)))
     elif args.verbose:
         print("%.3f: took %.3f ms" % (ts - start_ts, float(dur * 1000)))
+
+    if use_dnn and fpv_video:
+        textColor = (255,255,255)
+        bgColor = (0,0,0)
+        newImage = Image.new('RGBA', (100, 20), bgColor)
+        drawer = ImageDraw.Draw(newImage)
+        drawer.text((0, 0), "Frame #{}".format(frame_id), fill=textColor)
+        drawer.text((0, 10), "Stopped:{}".format(stopped), fill=textColor)
+        newImage = cv2.cvtColor(np.array(newImage), cv2.COLOR_BGR2RGBA)
+        frame = cm.overlay_image(frame,
+                                 newImage,
+                                 x_offset = 0, y_offset = 0)
+        vidfile.write(frame)
+
+    frame_id+=1
 
     if timeout > 0 and (ts - start_ts) > timeout:
         print("timeout after %d seconds" % args.time)
