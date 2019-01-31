@@ -74,6 +74,7 @@ first = True
 
 threshold = 700
 
+context = zmq.Context()
 sock = context.socket(zmq.REQ)
 sock.connect("tcp://127.0.0.1:5678")
 
@@ -108,8 +109,9 @@ while True:
         if first:
             first = False
         else:
-            if labels[top] == "go" || labels[top] == "stop":
+            if labels[top] == "go" or labels[top] == "stop":
                 sock.send(labels[top])
+                message = sock.recv()
 
 print "Num: {}".format(len(times))
 print "Average: {}".format(np.mean(times))

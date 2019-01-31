@@ -276,10 +276,10 @@ while True:
     try:
         message = sock.recv(flags=zmq.NOBLOCK)
         if message == "go":
-            echo "go"
+            print "go"
             actuator.ffw()
         elif message == "stop":
-            echo "stop"
+            print "stop"
             actuator.stop()
         sock.send(message)
     except zmq.ZMQError as e:
