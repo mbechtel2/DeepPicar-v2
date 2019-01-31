@@ -12,6 +12,7 @@ import array
 import wave
 import audioop
 import params
+import zmq
 from pololu_drv8835_rpi import motors,MAX_SPEED
 
 actuator = __import__(params.actuator)
@@ -73,6 +74,9 @@ first = True
 
 threshold = 700
 
+sock = context.socket(zmq.REQ)
+sock.connect("tcp://127.0.0.1:5678")
+
 print "START"
 while True:
     cur = []
@@ -104,10 +108,8 @@ while True:
         if first:
             first = False
         else:
-            if labels[top] == "go":
-                actuator.ffw()
-            elif labels[top] == "stop":
-                actuator.stop()
+            if labels[top] == "go" || labels[top] == "stop":
+                sock.send(labels[top])
 
 print "Num: {}".format(len(times))
 print "Average: {}".format(np.mean(times))

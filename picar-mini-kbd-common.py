@@ -10,6 +10,7 @@ import numpy as np
 import sys
 import params
 import argparse
+import zmq
 
 import Image
 import ImageDraw
@@ -180,6 +181,11 @@ start_ts = time.time()
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
+# create IPC socket
+context = zmq.Context()
+sock = context.socket(zmq.REP)
+sock.bind("tcp://127.0.0.1:5678")
+
 # enter main loop
 while True:
     if use_thread:
@@ -266,6 +272,18 @@ while True:
             actuator.left()
             car_angle = -30
             btn = ord('j')
+
+    try:
+        message = sock.recv(flags=zmq.NOBLOCK)
+        if message == "go":
+            echo "go"
+            actuator.ffw()
+        elif message == "stop":
+            echo "stop"
+            actuator.stop()
+        sock.send(message)
+    except zmq.ZMQError as e:
+        pass
 
     dur = time.time() - ts
 
