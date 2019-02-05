@@ -9,6 +9,7 @@ import sys
 import params
 import argparse
 import zmq
+import pickle
 import local_common as cm
 import tensorflow as tf
 model = __import__(params.stop_model)
@@ -19,7 +20,7 @@ import preprocess
 #   -n / --ncpu : number of cores used by TensorFlow for inferencing
 #   -t / --thres : threshold for determing if the car should stop or go
 NCPU = 2
-threshold = 0.5
+threshold = params.stop_threshold
 parser = argparse.ArgumentParser(description='Stoplight recognition control')
 parser.add_argument("-n", "--ncpu",
                     help="number of cores to use.", type=int)
@@ -51,14 +52,18 @@ frame_sock.connect("tcp://127.0.0.1:5680")
 frame_sock.setsockopt_string(zmq.SUBSCRIBE, "FRAME".decode('ascii'))
 
 #Warmup
-frame = frame_sock.recv_multipart()[1]
+msg = frame_sock.recv_multipart()
+frame = pickle.loads(msg[1])
 img = preprocess.preprocess(frame)
 angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
+
+tot_time_list = []
 
 #Main image processing loop
 while True:
     #1. Get the current camera frame
-    frame = frame_sock.recv_multipart()[1]
+    msg = frame_sock.recv_multipart()
+    frame = pickle.loads(msg[1])
     ts = time.time()
 
     #2. Preprocess the frame
@@ -69,10 +74,10 @@ while True:
     print dnn_throttle
 
     #4. Send the appropriate message back to the main control loop
-    if dnn_throttle < threshold:
-        sock.send_multipart(["STOPGO","go"])
+    if dnn_throttle < params.stop_threshold:
+        stopgo_sock.send_multipart(["STOPGO","stop"])
     else:
-        sock.send_multipart(["STOPGO","stop"])
+        stopgo_sock.send_multipart(["STOPGO","go"])
 
     dur = time.time() - ts
 
