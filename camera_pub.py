@@ -11,6 +11,7 @@ use_thread=True
 
 def signal_handler(sig, frame):
     camera.stop()
+    quit()
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
