@@ -99,3 +99,11 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+epochs/
+models/
+audio_models/
+params.py
+server.py
+client.py
+client2.py

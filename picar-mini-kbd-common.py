@@ -11,9 +11,10 @@ import sys
 import params
 import argparse
 import zmq
+import pickle
 
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 import local_common as cm
 
 import input_kbd
@@ -134,8 +135,10 @@ keyfile_btn = open('out-key-btn.csv', 'w+')
 keyfile.write("ts_micro,frame,wheel,throttle\n")
 keyfile_btn.write("ts_micro,frame,btn,speed\n")
 rec_start_time = 0
-# fourcc = cv2.VideoWriter_fourcc(*'XVID')
-fourcc = cv2.cv.CV_FOURCC(*'XVID')
+try:
+    fourcc = cv2.cv.CV_FOURCC(*'XVID')
+except AttributeError as e:
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
 vidfile = cv2.VideoWriter('out-video.avi', fourcc,
                           cfg_cam_fps, cfg_cam_res)
 fpvfile = cv2.VideoWriter('fpv-video.avi', fourcc,
@@ -143,8 +146,18 @@ fpvfile = cv2.VideoWriter('fpv-video.avi', fourcc,
 
 # initlaize deeppicar modules
 actuator.init(cfg_throttle)
-camera.init(res=cfg_cam_res, fps=cfg_cam_fps, threading=use_thread)
+#camera.init(res=cfg_cam_res, fps=cfg_cam_fps, threading=use_thread)
 atexit.register(turn_off)
+
+# create IPC socket
+context = zmq.Context()
+stopgo_sock = context.socket(zmq.SUB)
+stopgo_sock.bind("tcp://127.0.0.1:5678")
+stopgo_sock.setsockopt_string(zmq.SUBSCRIBE, "STOPGO".decode('ascii'))
+
+frame_sock = context.socket(zmq.SUB)
+frame_sock.connect("tcp://127.0.0.1:5680")
+frame_sock.setsockopt_string(zmq.SUBSCRIBE, "FRAME".decode('ascii'))
 
 # initilize dnn model
 if use_dnn == True:
@@ -166,7 +179,10 @@ if use_dnn == True:
     saver.restore(sess, model_load_path)
 
     # warm up.
-    frame = camera.read_frame()
+    #frame = camera.read_frame()
+    print "waiting"
+    msg = frame_sock.recv_multipart()
+    frame = pickle.loads(msg[1])
     img = preprocess.preprocess(frame)
     angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
 
@@ -181,16 +197,15 @@ start_ts = time.time()
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
-# create IPC socket
-context = zmq.Context()
-sock = context.socket(zmq.REP)
-sock.bind("tcp://127.0.0.1:5678")
+stopped = False
 
 # enter main loop
 while True:
-    if use_thread:
-        time.sleep(next(g))
-    frame = camera.read_frame()
+    #if use_thread:
+    #    time.sleep(next(g))
+    #frame = camera.read_frame()
+    msg = frame_sock.recv_multipart()
+    frame = pickle.loads(msg[1])
     ts = time.time()
 
     # read a frame
@@ -274,14 +289,13 @@ while True:
             btn = ord('j')
 
     try:
-        message = sock.recv(flags=zmq.NOBLOCK)
-        if message == "go":
+        message = stopgo_sock.recv_multipart(flags=zmq.NOBLOCK)
+        if message[1] == "go":
             print "go"
             actuator.ffw()
-        elif message == "stop":
+        elif message[1] == "stop":
             print "stop"
             actuator.stop()
-        sock.send(message)
     except zmq.ZMQError as e:
         pass
 
