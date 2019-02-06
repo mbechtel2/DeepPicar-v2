@@ -35,7 +35,8 @@ view_video = False
 fpv_video = False
 
 cfg_cam_res = (320, 240)
-cfg_cam_fps = 30
+cfg_cam_shape = (240,320,3)
+cfg_cam_fps = 20
 cfg_throttle = 50 # 50% power.
 
 NCPU = 2
@@ -157,6 +158,7 @@ stopgo_sock.setsockopt_string(zmq.SUBSCRIBE, "STOPGO".decode('ascii'))
 
 frame_sock = context.socket(zmq.SUB)
 frame_sock.connect("tcp://127.0.0.1:5680")
+frame_sock.setsockopt(zmq.CONFLATE,1)
 frame_sock.setsockopt_string(zmq.SUBSCRIBE, "FRAME".decode('ascii'))
 
 # initilize dnn model
@@ -179,10 +181,10 @@ if use_dnn == True:
     saver.restore(sess, model_load_path)
 
     # warm up.
-    #frame = camera.read_frame()
     print "waiting"
     msg = frame_sock.recv_multipart()
-    frame = pickle.loads(msg[1])
+    frame = np.fromstring(msg[1], dtype=msg[2])
+    frame = frame.reshape(cfg_cam_shape)
     img = preprocess.preprocess(frame)
     angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
 
@@ -201,11 +203,11 @@ stopped = False
 
 # enter main loop
 while True:
-    #if use_thread:
-    #    time.sleep(next(g))
-    #frame = camera.read_frame()
+    if use_thread:
+        time.sleep(next(g))
     msg = frame_sock.recv_multipart()
-    frame = pickle.loads(msg[1])
+    frame = np.fromstring(msg[1],dtype=msg[2])
+    frame = frame.reshape(cfg_cam_shape)
     ts = time.time()
 
     # read a frame
