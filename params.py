@@ -23,6 +23,15 @@ actuator="actuator-drv8835"
 ##########################################################
 microphone="microphone-webcam"
 
+audio_device = "sysdefault:CARD=CameraB409241"
+audio_channels = 1
+audio_sampwidth = 2
+audio_rate = 16000
+audio_period = 160
+audio_length1 = 20000
+audio_length2 = 80000
+audio_threshold = 700
+
 ##########################################################
 # model selection
 #   "model-5conv_3fc"   <-- nvidia dave-2 model
@@ -32,22 +41,21 @@ microphone="microphone-webcam"
 #   "model-5conv_3fc_noreuse.ckpt"  <-- ittc building maze
 #   "model-5conv_3fc-home_night.ckpt" <-- kitchen@night
 ##########################################################
-model="model-5conv_3fc"
-model_load_file="DeepPicar-model.ckpt"
+model="model-3conv_1pool"
+model_load_file="DeepPicar-rlgl.ckpt"
 model_load_file2="model-5conv_3fc-home_night.ckpt"
 model_load_file3="model-5conv_3fc-home_night.ckpt"
 model_load_file4="model-5conv_3fc-home_night.ckpt"
 model_save_file=model_load_file
 
-stop_model="model-3conv_1pool"
+stop_model="model-stop-3conv_1pool"
 stop_model_load_file = "DeepPicar-stop-all-normal-4000.ckpt"
 stop_model_save_file = stop_model_load_file
+stop_threshold = 0.5
 
 audio_model_load_file = "audio-models/svdf_frozen_graph.pb"
-audio_channels= 1
-audio_rate = 16000
-audio_period = 160
-audio_length = 15000
+audio_label_load_file = "audio-models/svdf_labels.txt"
+audio_input_data_file = "tmp/test.wav"
 
 ##########################################################
 # Training options

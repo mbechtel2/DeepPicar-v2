@@ -50,10 +50,12 @@ stopgo_sock.connect("tcp://127.0.0.1:5678")
 frame_sock = context.socket(zmq.SUB)
 frame_sock.connect("tcp://127.0.0.1:5680")
 frame_sock.setsockopt_string(zmq.SUBSCRIBE, "FRAME".decode('ascii'))
+cfg_cam_shape = (240,320,3)
 
 #Warmup
 msg = frame_sock.recv_multipart()
-frame = pickle.loads(msg[1])
+frame = np.fromstring(msg[1], dtype=msg[2])
+frame = frame.reshape(cfg_cam_shape)
 img = preprocess.preprocess(frame)
 angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
 
@@ -63,7 +65,9 @@ tot_time_list = []
 while True:
     #1. Get the current camera frame
     msg = frame_sock.recv_multipart()
-    frame = pickle.loads(msg[1])
+    frame = np.fromstring(msg[1], dtype=msg[2])
+    frame = frame.reshape(cfg_cam_shape)
+
     ts = time.time()
 
     #2. Preprocess the frame
