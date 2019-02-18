@@ -12,6 +12,12 @@ import params
 import argparse
 import zmq
 import pickle
+from tfmini import TFmini
+import rospy
+from std_msgs.msg import *
+from sensor_msgs.msg import Image as Img
+import numpy as np
+from cv_bridge import CvBridge
 
 from PIL import Image
 from PIL import ImageDraw
@@ -33,9 +39,11 @@ use_thread = True
 use_keyinput = True
 view_video = False
 fpv_video = False
+use_sensor = False
+frame = None
+bridge = CvBridge()
 
 cfg_cam_res = (320, 240)
-cfg_cam_shape = (240,320,3)
 cfg_cam_fps = 20
 cfg_throttle = 50 # 50% power.
 
@@ -87,6 +95,10 @@ def turn_off():
 def signal_handler(sig, frame):
     turn_off()
     sys.exit(0)
+    
+def callback(data):
+    global frame
+    frame = bridge.imgmsg_to_cv2(data) #, "bgr8")
 
 ##########################################################
 # program begins
@@ -108,6 +120,8 @@ parser.add_argument("-k", "--nokey",
                     help="no keyboard input mode", action="store_true")
 parser.add_argument("-v", "--verbose",
                     help="debug level", type=int)
+parser.add_argument("-s", "--usesensor", 
+                    help="use distance sensor", action="store_true")
 
 args = parser.parse_args()
 
@@ -129,6 +143,8 @@ if args.time:
     print ("timeout = %d" % args.time)
 if args.nokey:
     use_keyinput = False
+if args.usesensor:
+    use_sensor = True
 
 # create files for data recording
 keyfile = open('out-key.csv', 'w+')
@@ -156,10 +172,18 @@ stopgo_sock = context.socket(zmq.SUB)
 stopgo_sock.bind("tcp://127.0.0.1:5678")
 stopgo_sock.setsockopt_string(zmq.SUBSCRIBE, "STOPGO".decode('ascii'))
 
+'''
 frame_sock = context.socket(zmq.SUB)
 frame_sock.connect("tcp://127.0.0.1:5680")
-frame_sock.setsockopt(zmq.CONFLATE,1)
 frame_sock.setsockopt_string(zmq.SUBSCRIBE, "FRAME".decode('ascii'))
+'''
+
+rospy.init_node('FrameSub', anonymous=True)
+rospy.Subscriber('FRAME', Img, callback)
+
+if use_sensor:
+    # create TFMini distance sensor object
+    tf = TFmini('/dev/ttyUSB0', mode=TFmini.STD_MODE)
 
 # initilize dnn model
 if use_dnn == True:
@@ -181,10 +205,12 @@ if use_dnn == True:
     saver.restore(sess, model_load_path)
 
     # warm up.
+    #frame = camera.read_frame()
     print "waiting"
-    msg = frame_sock.recv_multipart()
-    frame = np.fromstring(msg[1], dtype=msg[2])
-    frame = frame.reshape(cfg_cam_shape)
+    while frame is None:
+        continue
+    #msg = frame_sock.recv_multipart()
+    #frame = pickle.loads(msg[1])
     img = preprocess.preprocess(frame)
     angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
 
@@ -203,11 +229,13 @@ stopped = False
 
 # enter main loop
 while True:
-    if use_thread:
-        time.sleep(next(g))
-    msg = frame_sock.recv_multipart()
-    frame = np.fromstring(msg[1],dtype=msg[2])
-    frame = frame.reshape(cfg_cam_shape)
+    if frame is None:
+        continue
+    #if use_thread:
+    #    time.sleep(next(g))
+    #frame = camera.read_frame()
+    #msg = frame_sock.recv_multipart()
+    #frame = pickle.loads(msg[1])
     ts = time.time()
 
     # read a frame
@@ -293,14 +321,30 @@ while True:
     try:
         message = stopgo_sock.recv_multipart(flags=zmq.NOBLOCK)
         if message[1] == "go":
-            print "go"
-            actuator.ffw()
+	    if stopped:
+		stopped = False
+            	print "go"
+            	actuator.ffw()
         elif message[1] == "stop":
+	    stopped = True
             print "stop"
             actuator.stop()
     except zmq.ZMQError as e:
         pass
 
+    if use_sensor:
+        distance = tf.read()
+        if distance and distance == 0.3:
+		if not stopped:
+			stopped = True
+			print "stop"
+                	actuator.stop()
+	elif distance and distance > 0.3:
+		if stopped:
+			stopped = False
+			print "go"
+			actuator.ffw()
+        
     dur = time.time() - ts
 
     tot_time_list.append(dur)
@@ -326,10 +370,11 @@ while True:
         if use_dnn and fpv_video:
             textColor = (255,255,255)
             bgColor = (0,0,0)
-            newImage = Image.new('RGBA', (100, 20), bgColor)
+            newImage = Image.new('RGBA', (100, 30), bgColor)
             drawer = ImageDraw.Draw(newImage)
             drawer.text((0, 0), "Frame #{}".format(frame_id), fill=textColor)
             drawer.text((0, 10), "Angle:{}".format(car_angle), fill=textColor)
+	    drawer.text((0, 20), "Stopped:{}".format(stopped), fill=textColor)
             newImage = cv2.cvtColor(np.array(newImage), cv2.COLOR_BGR2RGBA)
             frame = cm.overlay_image(frame,
                                      newImage,
@@ -342,6 +387,7 @@ while True:
         print ("%.3f %d %.3f %d %d(ms)" %
            (ts, frame_id, angle, btn, int((time.time() - ts)*1000)))
 
+    frame = None
     if timeout > 0 and (ts - start_ts) > timeout:
         print("timeout after %d seconds" % args.time)
         break

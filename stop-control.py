@@ -15,6 +15,18 @@ import tensorflow as tf
 model = __import__(params.stop_model)
 import local_common as cm
 import preprocess
+import rospy
+from std_msgs.msg import *
+from sensor_msgs.msg import Image as Img
+import numpy as np
+from cv_bridge import CvBridge
+
+frame = None
+bridge = CvBridge()
+
+def callback(data):
+    global frame
+    frame = bridge.imgmsg_to_cv2(data, "bgr8")
 
 #Get user parameters:
 #   -n / --ncpu : number of cores used by TensorFlow for inferencing
@@ -47,15 +59,21 @@ context = zmq.Context()
 stopgo_sock = context.socket(zmq.PUB)
 stopgo_sock.connect("tcp://127.0.0.1:5678")
 
+'''
 frame_sock = context.socket(zmq.SUB)
 frame_sock.connect("tcp://127.0.0.1:5680")
 frame_sock.setsockopt_string(zmq.SUBSCRIBE, "FRAME".decode('ascii'))
-cfg_cam_shape = (240,320,3)
+'''
 
+rospy.init_node('StopFrameSub', anonymous=True)
+rospy.Subscriber('FRAME', Img, callback)
+
+while frame is None:
+    continue
+    
 #Warmup
-msg = frame_sock.recv_multipart()
-frame = np.fromstring(msg[1], dtype=msg[2])
-frame = frame.reshape(cfg_cam_shape)
+#msg = frame_sock.recv_multipart()
+#frame = pickle.loads(msg[1])
 img = preprocess.preprocess(frame)
 angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
 
@@ -63,22 +81,22 @@ tot_time_list = []
 
 #Main image processing loop
 while True:
+    if frame is None:
+        continue
     #1. Get the current camera frame
-    msg = frame_sock.recv_multipart()
-    frame = np.fromstring(msg[1], dtype=msg[2])
-    frame = frame.reshape(cfg_cam_shape)
-
+    #msg = frame_sock.recv_multipart()
+    #frame = pickle.loads(msg[1])
     ts = time.time()
 
     #2. Preprocess the frame
     img = preprocess.preprocess(frame)
 
     #3. Feed the preprocessed frame to the model and get the predicted output
-    dnn_throttle = model.y.eval(feed_dict={model.x: [img]})[0][0]
-    print dnn_throttle
+    dnn_stop = model.y.eval(feed_dict={model.x: [img]})[0][0]
+    print dnn_stop
 
     #4. Send the appropriate message back to the main control loop
-    if dnn_throttle < params.stop_threshold:
+    if dnn_stop < params.stop_threshold:
         stopgo_sock.send_multipart(["STOPGO","stop"])
     else:
         stopgo_sock.send_multipart(["STOPGO","go"])
@@ -86,6 +104,8 @@ while True:
     dur = time.time() - ts
 
     tot_time_list.append(dur)
+
+    frame = None
 
 #Calculate and display statistics of the total inferencing times
 print "count:", len(tot_time_list)
