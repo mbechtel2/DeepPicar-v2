@@ -49,7 +49,7 @@ if write_summary:
     summary_writer = tf.summary.FileWriter(params.save_dir, graph=tf.get_default_graph())
 
 if params.shuffle_training:
-    data.load_imgs()
+    data.load_imgs_v2()
 
 # center, curve 50:50%
 data.categorize_imgs()

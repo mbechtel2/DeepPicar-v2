@@ -27,10 +27,7 @@ actuator="actuator-drv8835"
 #   "model-5conv_3fc-home_night.ckpt" <-- kitchen@night
 ##########################################################
 model="model-5conv_3fc"
-model_load_file="model-5conv_3fc-home_night.ckpt"
-model_load_file2="model-5conv_3fc-home_night.ckpt"
-model_load_file3="model-5conv_3fc-home_night.ckpt"
-model_load_file4="model-5conv_3fc-home_night.ckpt"
+model_load_file="model-5conv_ittc.ckpt"
 model_save_file=model_load_file
 
 ##########################################################
@@ -52,6 +49,7 @@ use_picar_mini = True # visualization fix for picar mini
 ##########################################################
 save_dir = os.path.abspath('models')
 data_dir = os.path.abspath('epochs')
+# data_dir = '/projects/csl/deeppicar/train_data_ittc_newtrack'
 out_dir = os.path.abspath('output')
 
 if not os.path.isdir(data_dir):
@@ -60,6 +58,9 @@ if not os.path.isdir(out_dir):
     os.makedirs(out_dir)
 
 epochs = OrderedDict()
-epochs['train'] = [1,3,5,7,9,11] 
-epochs['val']   = [2,4,6,8,10]
+epochs['all'] = [0,1,2,3]
+train_pct = 0.8
+
+#epochs['train'] = [1,3,5,7,9,11] 
+#epochs['val']   = [2,4,6,8,10]
 
