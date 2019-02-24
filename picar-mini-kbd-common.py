@@ -40,7 +40,6 @@ NCPU = 2
 
 frame_id = 0
 angle = 0.0
-throttle = 0
 btn   = ord('k') # center
 period = 0.05 # sec (=50ms)
 timeout = 0.0 # no timeout
@@ -79,7 +78,7 @@ def turn_off():
     print "99pct:", np.percentile(tot_time_list, 99)
     print "min:", np.min(tot_time_list)
     print "median:", np.median(tot_time_list)
-    print "stdev:", np.std(tot_time_list)
+    print "stdev:", np.std(tot_time_list) 
 
 def signal_handler(sig, frame):
     turn_off()
@@ -130,7 +129,7 @@ if args.nokey:
 # create files for data recording
 keyfile = open('out-key.csv', 'w+')
 keyfile_btn = open('out-key-btn.csv', 'w+')
-keyfile.write("ts_micro,frame,wheel,throttle\n")
+keyfile.write("ts_micro,frame,wheel\n")
 keyfile_btn.write("ts_micro,frame,btn,speed\n")
 rec_start_time = 0
 # fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -168,7 +167,7 @@ if use_dnn == True:
     frame = camera.read_frame()
     img = preprocess.preprocess(frame)
     angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
-
+    
     print ("Done..")
 
 # null_frame = np.zeros((cfg_cam_res[0],cfg_cam_res[1],3), np.uint8)
@@ -197,7 +196,7 @@ while True:
         ch = ord(input_kbd.read_single_keypress())
     else:
         ch = ''
-
+        
     if ch == ord('j'):
         actuator.left()
         print ("left")
@@ -215,16 +214,13 @@ while True:
         btn   = ord('l')
     elif ch == ord('a'):
         actuator.ffw()
-        throttle = 1
         print ("accel")
     elif ch == ord('s'):
         actuator.stop()
         print ("stop")
-        throttle = 0
         btn   = ch
     elif ch == ord('z'):
         actuator.rew()
-        throttle = -1
         print ("reverse")
     elif ch == ord('q'):
         break
@@ -270,7 +266,7 @@ while True:
     dur = time.time() - ts
 
     tot_time_list.append(dur)
-
+    
     if dur > period:
         print("%.3f: took %.3f ms - deadline miss."
               % (ts - start_ts, float(dur * 1000)))
@@ -282,7 +278,7 @@ while True:
         frame_id += 1
 
         # write input (angle)
-        str = "{},{},{},{}\n".format(int(ts*1000), frame_id, angle, throttle)
+        str = "{},{},{}\n".format(int(ts*1000), frame_id, angle)
         keyfile.write(str)
 
         # write input (button: left, center, stop, speed)
@@ -311,6 +307,7 @@ while True:
     if timeout > 0 and (ts - start_ts) > timeout:
         print("timeout after %d seconds" % args.time)
         break
-
+    
 print ("Finish..")
 turn_off()
+
