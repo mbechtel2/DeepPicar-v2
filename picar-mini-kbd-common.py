@@ -10,6 +10,7 @@ import numpy as np
 import sys
 import params
 import argparse
+import random
 
 import Image
 import ImageDraw
@@ -26,7 +27,7 @@ actuator = __import__(params.actuator)
 ##########################################################
 # global variable initialization
 ##########################################################
-use_dnn = False
+use_dnn = 0.0
 use_thread = True
 use_keyinput = True
 view_video = False
@@ -52,6 +53,13 @@ def deg2rad(deg):
     return deg * math.pi / 180.0
 def rad2deg(rad):
     return 180.0 * rad / math.pi
+def ang2btn(deg):
+    if deg < 15 and deg > -15:
+        return ord('k')
+    elif deg >= 15:
+        return ord('l')
+    else:
+        return ord('j')
 
 def g_tick():
     t = time.time()
@@ -89,7 +97,7 @@ def signal_handler(sig, frame):
 ##########################################################
 parser = argparse.ArgumentParser(description='DeepPicar main')
 parser.add_argument("-d", "--dnn",
-                    help="Enable DNN", action="store_true")
+                    help="Enable DNN", type=float)
 parser.add_argument("-t", "--throttle",
                     help="throttle percent. [0-100]%", type=int)
 parser.add_argument("-n", "--ncpu",
@@ -108,8 +116,8 @@ parser.add_argument("-v", "--verbose",
 args = parser.parse_args()
 
 if args.dnn:
-    print ("DNN is on")
-    use_dnn = True
+    print ("DNN is on for %d pct" % (args.dnn * 100.0))
+    use_dnn = args.dnn
 if args.throttle:
     cfg_throttle = args.throttle
     print ("throttle = %d pct" % (args.throttle))
@@ -145,7 +153,7 @@ camera.init(res=cfg_cam_res, fps=cfg_cam_fps, threading=use_thread)
 atexit.register(turn_off)
 
 # initilize dnn model
-if use_dnn == True:
+if use_dnn > 0.0:
     print ("Load TF")
     import tensorflow as tf
     model = __import__(params.model)
@@ -183,12 +191,13 @@ signal.signal(signal.SIGTERM, signal_handler)
 while True:
     if use_thread:
         time.sleep(next(g))
+
+    # read a video frame
     frame = camera.read_frame()
     ts = time.time()
 
-    # read a frame
-    # ret, frame = cap.read()
 
+    # read human input
     if view_video == True:
         cv2.imshow('frame', frame)
         ch = cv2.waitKey(1) & 0xFF
@@ -196,22 +205,19 @@ while True:
         ch = ord(input_kbd.read_single_keypress())
     else:
         ch = ''
-        
+
+    # angle input
     if ch == ord('j'):
-        actuator.left()
         print ("left")
         angle = deg2rad(-30)
-        btn   = ord('j')
     elif ch == ord('k'):
-        actuator.center()
         print ("center")
         angle = deg2rad(0)
-        btn   = ord('k')
     elif ch == ord('l'):
-        actuator.right()
         print ("right")
         angle = deg2rad(30)
-        btn   = ord('l')
+
+    # throttle input
     elif ch == ord('a'):
         actuator.ffw()
         print ("accel")
@@ -222,6 +228,8 @@ while True:
     elif ch == ord('z'):
         actuator.rew()
         print ("reverse")
+
+    # other functions
     elif ch == ord('q'):
         break
     elif ch == ord('r'):
@@ -238,41 +246,39 @@ while True:
             view_video = False
     elif ch == ord('d'):
         print ("toggle DNN mode")
-        if use_dnn == False:
-            use_dnn = True
+        if use_dnn > 0.0:
+            use_dnn = 0.0 # disable dnn (manual control)
         else:
-            use_dnn = False
+            use_dnn = args.dnn # enable dnn
 
-    if use_dnn == True:
-        # 1. machine input
+    use_machine = False
+    # dnn input (override human input)
+    if random.random() < use_dnn:
         img = preprocess.preprocess(frame)
         angle = model.y.eval(feed_dict={model.x: [img]})[0][0]
-        car_angle = 0
+        use_machine = True
 
-        degree = rad2deg(angle)
-        if degree < 15 and degree > -15:
-            actuator.center()
-            car_angle = 0
-            btn = ord('k')
-        elif degree >= 15:
-            actuator.right()
-            car_angle = 30
-            btn = ord('l')
-        elif degree <= -15:
-            actuator.left()
-            car_angle = -30
-            btn = ord('j')
+    # angle control
+    degree = rad2deg(angle)
+    if degree < 15 and degree > -15:
+        actuator.center()
+    elif degree >= 15:
+        actuator.right()
+    elif degree <= -15:
+        actuator.left()
 
+    # done loop
     dur = time.time() - ts
-
     tot_time_list.append(dur)
     
     if dur > period:
         print("%.3f: took %.3f ms - deadline miss."
               % (ts - start_ts, float(dur * 1000)))
     elif args.verbose:
-        print("%.3f: took %.3f ms" % (ts - start_ts, float(dur * 1000)))
+        print("%.3f: took %.3f ms - %d" %
+              (ts - start_ts, float(dur * 1000), use_machine))
 
+    # data collection
     if rec_start_time > 0:
         # increase frame_id
         frame_id += 1
@@ -282,16 +288,16 @@ while True:
         keyfile.write(str)
 
         # write input (button: left, center, stop, speed)
-        str = "{},{},{},{}\n".format(int(ts*1000), frame_id, btn, cfg_throttle)
+        str = "{},{},{},{}\n".format(int(ts*1000), frame_id, ang2btn(angle), cfg_throttle)
         keyfile_btn.write(str)
 
-        if use_dnn and fpv_video:
+        if use_dnn > 0.0 and fpv_video:
             textColor = (255,255,255)
             bgColor = (0,0,0)
             newImage = Image.new('RGBA', (100, 20), bgColor)
             drawer = ImageDraw.Draw(newImage)
             drawer.text((0, 0), "Frame #{}".format(frame_id), fill=textColor)
-            drawer.text((0, 10), "Angle:{}".format(car_angle), fill=textColor)
+            drawer.text((0, 10), "Angle:{}".format(degree), fill=textColor)
             newImage = cv2.cvtColor(np.array(newImage), cv2.COLOR_BGR2RGBA)
             frame = cm.overlay_image(frame,
                                      newImage,
@@ -302,7 +308,7 @@ while True:
             print ("recorded 1000 frames")
             break
         print ("%.3f %d %.3f %d %d(ms)" %
-           (ts, frame_id, angle, btn, int((time.time() - ts)*1000)))
+           (ts, frame_id, angle, ang2btn(btn), int((time.time() - ts)*1000)))
 
     if timeout > 0 and (ts - start_ts) > timeout:
         print("timeout after %d seconds" % args.time)
