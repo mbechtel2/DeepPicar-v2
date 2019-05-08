@@ -170,7 +170,7 @@ while True:
         btn   = ch
     elif ch == ord('z'):
         actuator.rew()
-        print ("reverse")
+        print ("reverse")arm_freq
     elif ch == ord('q'):
         break
     elif ch == ord('r'):
@@ -219,7 +219,7 @@ while True:
     else:
         print("%.3f: took %d ms" % (ts - start_ts, int(dur * 1000)))
 
-    if rec_start_time > 0:
+    if rec_start_time > 0 and not frame is None:
         # increase frame_id
         frame_id += 1
 
