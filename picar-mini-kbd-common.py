@@ -170,7 +170,7 @@ while True:
         btn   = ch
     elif ch == ord('z'):
         actuator.rew()
-        print ("reverse")arm_freq
+        print ("reverse")
     elif ch == ord('q'):
         break
     elif ch == ord('r'):
