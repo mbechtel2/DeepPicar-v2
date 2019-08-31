@@ -122,7 +122,7 @@ def get_postgres_type_from_variable(x):
     elif isinstance(x, float) or isinstance(x, decimal.Decimal):
         return postgres_double_type
     else:
-        print 'Incorrect type is {}'.format(type(x))
+        print ('Incorrect type is {}'.format(type(x)))
         assert False
 
 def get_postgres_type_from_str(s):
@@ -249,8 +249,8 @@ def fetch_csv_data(filepath, delimiter=',', consider_only_a_sample=False, univ_n
                 continue
 
             if len(fields) != len(row):
-                print 'fields:', fields
-                print 'row:', row
+                print ('fields: {}'.format(fields))
+                print ('row:{}'.format(row))
                                     
             assert len(fields) == len(row)
 
