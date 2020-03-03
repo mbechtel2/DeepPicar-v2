@@ -88,13 +88,13 @@ def is_int(s):
         return False
 
 def is_str(obj):
-    return isinstance(obj, basestring)
+    return isinstance(obj, str)
 
 def is_long(s):
     assert not is_sequence(s)
 
     try: 
-        long(s)
+        int(s)
         return True
     except ValueError:
         return False
@@ -140,7 +140,7 @@ def cast_str_to_type_force(s, type_to_force):
         return int(s)
     elif type_to_force == postgres_long_type:
         assert is_long(s)
-        return long(s)
+        return int(s)
     elif type_to_force == postgres_double_type:
         assert is_number(s)
         return float(s)
@@ -209,8 +209,8 @@ def apply_types_to_row(types, row):
     else:
         assert False
 
-    for i, x in enumerate(vals):
-        vals[i] = cast_str_to_type_force(x, type_to_force=types[i])
+    #for i, x in enumerate(vals):
+    #    vals[i] = cast_str_to_type_force(x, type_to_force=types[i])
 
     if isinstance(row, OrderedDict):
         return OrderedDict(zip(keys, vals))
@@ -229,7 +229,7 @@ def fetch_csv_data(filepath, delimiter=',', consider_only_a_sample=False, univ_n
     assert os.path.isfile(filepath)
     data_raw = []
 
-    open_flag = 'rb'
+    open_flag = 'rt'
     open_flag += 'U' if univ_new_line else ''
     row_counter = 0
 
@@ -351,7 +351,7 @@ def ffmpeg_frame_count(path):
 
     for line in lines:
         line = line.strip()
-        res = re.match(r'frame=\s*(\d+)\s*fps=', line)
+        res = re.match(b'frame=\s*(\d+)\s*fps=', line)
         if res:
             fc = res.group(1)
             
