@@ -17,14 +17,14 @@ import local_common as cm
 
 write_summary = params.write_summary
 
-sess = tf.InteractiveSession()
+sess = tf.compat.v1.InteractiveSession()
 
-loss = tf.reduce_mean(tf.square(tf.subtract(model.y_, model.y)))
+loss = tf.reduce_mean(input_tensor=tf.square(tf.subtract(model.y_, model.y)))
 # loss = tf.reduce_mean(tf.square(tf.sub(model.y_, model.y)))
 #         + tf.add_n([tf.nn.l2_loss(v) for v in train_vars]) * L2NormConst
-train_step = tf.train.AdamOptimizer(1e-4).minimize(loss)
+train_step = tf.compat.v1.train.AdamOptimizer(1e-4).minimize(loss)
 
-saver = tf.train.Saver()
+saver = tf.compat.v1.train.Saver()
 
 model_load_path = cm.jn(params.save_dir, params.model_load_file)
 print (model_load_path)
@@ -33,21 +33,21 @@ if os.path.exists(model_load_path + ".index"):
     saver.restore(sess, model_load_path)
 else:
     print ("Initialize weights.")
-    sess.run(tf.global_variables_initializer())
+    sess.run(tf.compat.v1.global_variables_initializer())
 
 # create a summary to monitor cost tensor
 if write_summary:
-    tf.summary.scalar("loss", loss)
+    tf.compat.v1.summary.scalar("loss", loss)
 
 # merge all summaries into a single op
 if write_summary:
-    merged_summary_op = tf.summary.merge_all()
+    merged_summary_op = tf.compat.v1.summary.merge_all()
 
 time_start = time.time()
 
 # op to write logs to Tensorboard
 if write_summary:
-    summary_writer = tf.summary.FileWriter(params.save_dir, graph=tf.get_default_graph())
+    summary_writer = tf.compat.v1.summary.FileWriter(params.save_dir, graph=tf.compat.v1.get_default_graph())
 
 if params.shuffle_training:
     data.load_imgs()
@@ -55,7 +55,7 @@ if params.shuffle_training:
 # center, curve 50:50%
 data.categorize_imgs()
 
-for i in xrange(params.training_steps):
+for i in range(params.training_steps):
     if params.use_category_normal:
         txx, tyy = data.load_batch_category_normal('train')
     else:
