@@ -10,7 +10,7 @@ frame = None
 # init(), read_frame(), stop()
 
 def init(res=(320, 240), fps=30, threading=True):
-    print "Initilize camera."
+    print ("Initilize camera.")
     global cap, use_thread, frame, cam_thr
 
     cap = cv2.VideoCapture(0)

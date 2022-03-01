@@ -9,8 +9,8 @@ import sys
 import params
 import argparse
 
-import Image
-import ImageDraw
+from PIL import Image
+from PIL import ImageDraw
 import local_common as cm
 
 import input_kbd
@@ -69,7 +69,7 @@ def turn_off():
 parser = argparse.ArgumentParser(description='DeepPicar main')
 parser.add_argument("-d", "--dnn", help="Enable DNN", action="store_true")
 parser.add_argument("-t", "--throttle", help="throttle percent. [0-100]%", type=int)
-parser.add_argument("-n", "--ncpu", help="number of cores to use.", type=int)
+parser.add_argument("-n", "--ncpu", help="number of cores to use.", type=int, default=4)
 parser.add_argument("-f", "--fpvvideo", help="Take FPV video of DNN driving", action="store_true")
 args = parser.parse_args()
 
@@ -102,6 +102,16 @@ actuator.init(cfg_throttle)
 camera.init(res=cfg_cam_res, fps=cfg_cam_fps, threading=use_thread)
 atexit.register(turn_off)
 
+# image capture for callibration
+'''img_counter = 0
+while img_counter < 10:
+    frame = camera.read_frame()
+    img_name = "cal_images/opencv_frame_{}.png".format(img_counter)
+    cv2.imwrite(img_name, frame)
+    print("{} written!".format(img_name))
+    img_counter += 1
+'''
+
 # initilize dnn model
 if use_dnn == True:
     print ("Load TF")
@@ -111,13 +121,13 @@ if use_dnn == True:
     import preprocess
 
     print ("Load Model")
-    config = tf.ConfigProto(intra_op_parallelism_threads=NCPU,
+    config = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=NCPU,
                             inter_op_parallelism_threads=NCPU, \
                             allow_soft_placement=True,
                             device_count = {'CPU': 1})
 
-    sess = tf.InteractiveSession(config=config)
-    saver = tf.train.Saver()
+    sess = tf.compat.v1.InteractiveSession(config=config)
+    saver = tf.compat.v1.train.Saver()
     model_load_path = cm.jn(params.save_dir, params.model_load_file)
     saver.restore(sess, model_load_path)
     print ("Done..")
@@ -244,6 +254,8 @@ while True:
                                      x_offset = 0, y_offset = 0)
         # write video stream
         vidfile.write(frame)
+        #img_name = "cal_images/opencv_frame_{}.png".format(frame_id)
+        #cv2.imwrite(img_name, frame)
         if frame_id >= 1000:
             print ("recorded 1000 frames")
             break

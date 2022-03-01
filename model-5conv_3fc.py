@@ -3,9 +3,10 @@ from __future__ import division
 
 import tensorflow as tf
 import params
+tf.compat.v1.disable_eager_execution()
 
 def weight_variable(name, shape):
-    return tf.get_variable(name, shape=shape, initializer=tf.contrib.layers.xavier_initializer())
+    return tf.compat.v1.get_variable(name, shape=shape, initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="uniform"))
     # initial = tf.truncated_normal(shape, stddev=0.1)
     # return tf.Variable(initial)
 
@@ -14,10 +15,10 @@ def bias_variable(shape):
     return tf.Variable(initial)
 
 def conv2d(x, W, stride):
-    return tf.nn.conv2d(x, W, strides=[1, stride, stride, 1], padding='VALID')
+    return tf.nn.conv2d(input=x, filters=W, strides=[1, stride, stride, 1], padding='VALID')
 
-x = tf.placeholder(tf.float32, shape=[None, params.img_height, params.img_width, params.img_channels], name="input_x")
-y_ = tf.placeholder(tf.float32, shape=[None, 1])
+x = tf.compat.v1.placeholder(tf.float32, shape=[None, params.img_height, params.img_width, params.img_channels], name="input_x")
+y_ = tf.compat.v1.placeholder(tf.float32, shape=[None, 1])
 
 x_image = x
 

@@ -209,9 +209,10 @@ def apply_types_to_row(types, row):
     else:
         assert False
 
-    #for i, x in enumerate(vals):
-    #    vals[i] = cast_str_to_type_force(x, type_to_force=types[i])
-
+    vals = list(vals)
+    for i, x in enumerate(vals):
+        vals[i] = cast_str_to_type_force(x, type_to_force=types[i])
+        
     if isinstance(row, OrderedDict):
         return OrderedDict(zip(keys, vals))
     elif isinstance(row, list):
@@ -229,7 +230,8 @@ def fetch_csv_data(filepath, delimiter=',', consider_only_a_sample=False, univ_n
     assert os.path.isfile(filepath)
     data_raw = []
 
-    open_flag = 'rt'
+    open_flag = 'r'
+
     open_flag += 'U' if univ_new_line else ''
     row_counter = 0
 
@@ -342,7 +344,7 @@ def frame_count(path, method='ffmpeg'):
 def ffmpeg_frame_count(path):
     cmd = 'ffmpeg -i {} -vcodec copy -acodec copy -f null /dev/null 2>&1'.format(path)
     cmd_res = sp.check_output(cmd, shell=True)
-    cmd_res = copy.deepcopy(cmd_res)
+    cmd_res = copy.deepcopy(cmd_res).decode('utf-8')
 
     fc = None
 
