@@ -88,13 +88,13 @@ def is_int(s):
         return False
 
 def is_str(obj):
-    return isinstance(obj, basestring)
+    return isinstance(obj, str)
 
 def is_long(s):
     assert not is_sequence(s)
 
     try: 
-        long(s)
+        int(s)
         return True
     except ValueError:
         return False
@@ -140,7 +140,7 @@ def cast_str_to_type_force(s, type_to_force):
         return int(s)
     elif type_to_force == postgres_long_type:
         assert is_long(s)
-        return long(s)
+        return int(s)
     elif type_to_force == postgres_double_type:
         assert is_number(s)
         return float(s)
@@ -208,7 +208,7 @@ def apply_types_to_row(types, row):
         vals = row
     else:
         assert False
-
+    vals = list(vals)
     for i, x in enumerate(vals):
         vals[i] = cast_str_to_type_force(x, type_to_force=types[i])
 
@@ -229,7 +229,7 @@ def fetch_csv_data(filepath, delimiter=',', consider_only_a_sample=False, univ_n
     assert os.path.isfile(filepath)
     data_raw = []
 
-    open_flag = 'rb'
+    open_flag = 'r'
     open_flag += 'U' if univ_new_line else ''
     row_counter = 0
 
@@ -342,7 +342,7 @@ def frame_count(path, method='ffmpeg'):
 def ffmpeg_frame_count(path):
     cmd = 'ffmpeg -i {} -vcodec copy -acodec copy -f null /dev/null 2>&1'.format(path)
     cmd_res = sp.check_output(cmd, shell=True)
-    cmd_res = copy.deepcopy(cmd_res)
+    cmd_res = copy.deepcopy(cmd_res).decode('utf-8')
 
     fc = None
 

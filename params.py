@@ -22,8 +22,8 @@ actuator="actuator-drv8835"
 #   "model-5conv_3fc"   <-- nvidia dave-2 model
 #   "model-5conv_4fc"   <-- deeptesla model
 ##########################################################
-model="model-5conv_3fc"
-model_load_file="DeepPicarModel.ckpt"
+model="model-5conv_3fc_v2"
+model_load_file="DeepPicarModelFeb22.ckpt"
 model_load_file2="DeepPicarModel2.ckpt"
 model_load_file3="DeepPicarModel3.ckpt"
 model_load_file4="DeepPicarModel4.ckpt"
@@ -56,5 +56,5 @@ if not os.path.isdir(out_dir):
     os.makedirs(out_dir)
 
 epochs = OrderedDict()
-epochs['train'] = [1,3,5,7,9,11]
+epochs['train'] = [1,3,5,7,9]
 epochs['val']   = [2,4,6,8,10]
