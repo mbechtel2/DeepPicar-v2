@@ -12,10 +12,10 @@ camera="camera-webcam"
 
 ##########################################################
 # actuator selection
-#   "actuator-drv8835", "actuator-adafruit_hat"
+#   "actuator-drv8835", "actuator-adafruit_hat", "actuator-pca9685_l298n"
 #   "actuator-null"
 ##########################################################
-actuator="actuator-drv8835"
+actuator="actuator-pca9685_l298n"
 
 ##########################################################
 # model selection
@@ -58,3 +58,4 @@ if not os.path.isdir(out_dir):
 epochs = OrderedDict()
 epochs['train'] = [1,3,5,7,9,11]
 epochs['val']   = [2,4,6,8,10]
+
